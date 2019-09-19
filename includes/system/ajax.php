@@ -10,6 +10,8 @@ class Ajax
     add_action( 'wp_ajax_process_upload_report', [ $this, 'process_upload' ] );
   }
 
+
+
   public function process_upload()
   {
     if ( ! current_user_can( 'manage_areports' ) ) {

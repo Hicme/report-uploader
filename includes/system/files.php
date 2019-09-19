@@ -22,10 +22,16 @@ class Files
       'unique_filename_callback' => [ __CLASS__, 'unique_report_name' ],
     ];
 
+    $author = self::process_report_name( $file_id );
+
+    if ( isset( $author['error'] ) ) {
+      return new \WP_Error( 'upload_error', $author['error'] );
+    }
+
     $file = wp_handle_upload( $_FILES[ $file_id ], $overrides, $time );
 
     if ( isset( $file['error'] ) ) {
-      return new WP_Error( 'upload_error', $file['error'] );
+      return new \WP_Error( 'upload_error', $file['error'] );
     }
 
     $name = $_FILES[ $file_id ]['name'];
@@ -39,30 +45,49 @@ class Files
     $content = '';
     $excerpt = '';
 
-    $attachment = [
+    $file_data = [
       'post_mime_type' => $type,
       'guid'           => $url,
-      'post_parent'    => $post_id,
       'post_title'     => $title,
       'post_content'   => $content,
+      'post_author'    => $author['id'],
       'post_excerpt'   => $excerpt,
+      'comment_status' => 'closed',
+      'post_type'      => 'agent-reports',
+      'post_status'    => 'inherit',
+      'post_parent'    => 0,
     ];
-  
-    // This should never be set as it would then overwrite an existing attachment.
-    unset( $attachment['ID'] );
-  
-    // Save the data
-    $id = wp_insert_attachment( $attachment, $file, $post_id, true );
+
+    $id = wp_insert_post( $file_data, true );
     if ( ! is_wp_error( $id ) ) {
-      wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file ) );
+      update_post_meta( (int) $id, '_report_metadata', wp_generate_attachment_metadata( $id, $file ), true );
     }
   
     return $id;
   }
 
+  private static function process_report_name( $file_id )
+  {
+    $name = $_FILES[ $file_id ]['name'];
+    $exploded_name = explode( '-', $name );
+    $return = [];
+
+    if ( is_array( $exploded_name ) && isset( $exploded_name[2] ) && ! empty( trim( $exploded_name[2] ) ) ) {
+      $return['id'] = intval( $exploded_name[2] );
+    } else {
+      $return['error'] = __( "Can't parse file name. Double check it.", 'report_uploader' );
+    }
+
+    if ( ! report_uploader()->get_agent( $return['id'] ) ) {
+      $return['error'] = __( "Can't find agent by ISA ID => {$return['id']}.", 'report_uploader' );
+    }
+
+    return $return;
+  }
+
   public static function unique_report_name( $dir, $name, $ext )
   {
-
+    return md5( str_replace( $ext, '', $name ) ) . $ext;
   }
 
   public static function files_mine_types( $types )

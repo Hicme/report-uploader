@@ -9,7 +9,7 @@ final class StartUp
 
   public function __get( $key )
   {
-    if ( in_array( $key, array( 'upload', 'methods' ), true ) ) {
+    if ( in_array( $key, array( 'upload', 'get_agent' ), true ) ) {
       return $this->$key();
     }
   }
@@ -21,6 +21,7 @@ final class StartUp
     do_action( 'p_loaded' );
 
   }
+
 
 
   public function is_request( $type )
@@ -60,6 +61,11 @@ final class StartUp
   public function upload( $file_id )
   {
     return \system\Files::process_report_upload( $file_id );
+  }
+
+  public function get_agent( $isa_id )
+  {
+    return \system\User::find_agent_by_id( $isa_id );
   }
 
 }

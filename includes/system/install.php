@@ -16,6 +16,8 @@ class Install{
     self::create_cron();
   }
 
+
+
   private static function create_capability()
   {
     global $wp_roles;

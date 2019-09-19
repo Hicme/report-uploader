@@ -9,6 +9,8 @@ class Post_Types
     add_action( 'setup_theme', [ __CLASS__, 'register_post_type' ], 5 );
   }
 
+
+
   public static function register_post_type()
   {
     if( ! is_blog_installed() || post_type_exists( 'agent-reports' ) ){

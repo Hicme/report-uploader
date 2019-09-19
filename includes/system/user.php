@@ -13,6 +13,21 @@ class User
     add_action( 'edit_user_profile', [ __CLASS__, 'show_isa' ] );
   }
 
+
+
+  public static function find_agent_by_id( $isa_id )
+  {
+    global $wpdb;
+
+    $results = $wpdb->get_results( "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_isa_id' AND meta_value = '{$isa_id}'", OBJECT );
+
+    if ( $results ) {
+      return $results->user_id;
+    }
+
+    return false;
+  }
+
   public static function save_isa( $user_id )
   {
     if ( ! current_user_can( 'edit_user', $user_id ) ) { 
