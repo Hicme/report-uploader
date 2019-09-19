@@ -60,7 +60,7 @@ class Files
 
     $id = wp_insert_post( $file_data, true );
     if ( ! is_wp_error( $id ) ) {
-      update_post_meta( (int) $id, '_report_metadata', wp_generate_attachment_metadata( $id, $file ), true );
+      update_post_meta( (int) $id, '_attached_file', _wp_relative_upload_path( $file ), true );
     }
   
     return $id;
@@ -73,7 +73,7 @@ class Files
     $return = [];
 
     if ( is_array( $exploded_name ) && isset( $exploded_name[2] ) && ! empty( trim( $exploded_name[2] ) ) ) {
-      $return['id'] = intval( $exploded_name[2] );
+      $return['id'] = trim( $exploded_name[2] );
     } else {
       $return['error'] = __( "Can't parse file name. Double check it.", 'report_uploader' );
     }

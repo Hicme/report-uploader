@@ -22,7 +22,7 @@ class User
     $results = $wpdb->get_results( "SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '_isa_id' AND meta_value = '{$isa_id}'", OBJECT );
 
     if ( $results ) {
-      return $results->user_id;
+      return $results[0]->user_id;
     }
 
     return false;
