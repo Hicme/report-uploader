@@ -4,7 +4,7 @@ namespace system;
 
 class Front
 {
-  private static $paged = 0;
+  private static $paged = 1;
   private static $per_page = 20;
   private static $query;
 
@@ -40,6 +40,8 @@ class Front
 
   public static function setup_pagination()
   {
+    self::$per_page = get_option( 'posts_per_page', 20 );
+
     if ( is_user_logged_in() ) {
       if ( isset( $_GET['paginated'] ) && ! empty( $_GET['paginated'] ) ) {
         self::$paged = intval( $_GET['paginated'] );
@@ -56,6 +58,7 @@ class Front
         'orderby' => 'date',
         'post_type' => 'agent-reports',
         'post_status' => 'publish',
+        'paged' => self::$paged
       );
 
       if ( current_user_can('agent') ) {
@@ -87,7 +90,31 @@ class Front
 
   public static function front_pagination()
   {
+    if ( self::$query && self::$query->max_num_pages > 1 ) {
+      ?>
+      <div class="front-pagination">
+        <?php
+          for ( $i = 1; $i < self::$query->max_num_pages + 1; $i++ ) { 
+            $link = add_query_arg( [ 'paginated' => $i ], get_site_url( null, 'reports' ) );
 
+            if ( $i == self::$paged ) {
+              ?>
+                <span class="current front-pagination__link">
+                  <?php echo $i; ?>
+                </span>
+              <?php
+            } else {
+              ?>
+                <a href="<?php echo $link; ?>" class="front-pagination__link">
+                  <?php echo $i; ?>
+                </a>
+              <?php
+            }
+          }
+        ?>
+      </div>
+      <?php
+    }
   }
 
 }
