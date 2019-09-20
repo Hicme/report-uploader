@@ -32,14 +32,14 @@ class Ajax
       exit;
     }
 
-
+    echo '<div class="error-div report-success">';
     echo '<img class="pinkynail" src="/wp-includes/images/media/text.png" alt="">';
     echo '<a class="edit-attachment" href="' . esc_url( get_edit_post_link( $id ) ) . '" target="_blank">' . _x( 'Edit', 'media item' ) . '</a>';
 
     $post  = get_post( $id );
     $file  = get_attached_file( $post->ID );
     $title = $post->post_title ? $post->post_title : wp_basename( $file );
-    echo '<div class="filename new"><span class="title">' . esc_html( wp_html_excerpt( $title, 60, '&hellip;' ) ) . '</span></div>';
+    echo '<div class="filename new"><span class="title">' . esc_html( wp_html_excerpt( $title, 60, '&hellip;' ) ) . '</span></div></div>';
     exit();
   }
 

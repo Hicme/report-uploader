@@ -5,7 +5,7 @@ function report_uploader()
   return \system\StartUp::instance();
 }
 
-if( ! function_exists( 'generate_string' ) ){
+if ( ! function_exists( 'generate_string' ) ) {
   function generate_string( $length = 4 )
   {
     $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -18,7 +18,24 @@ if( ! function_exists( 'generate_string' ) ){
   }
 }
 
-if( ! function_exists( 'clean_styles' ) ){
+if ( ! function_exists( 'get_template_html' ) ) {
+  function get_template_html( $template_path, $args = array() )
+  {
+    if ( ! empty( $args ) && is_array( $args ) ) {
+    extract( $args );
+    }
+    
+    if ( ! file_exists( $template_path ) ) {
+        return false;
+    }
+
+    ob_start();
+    include $template_path;
+    return ob_get_clean();
+  }
+}
+
+if ( ! function_exists( 'clean_styles' ) ) {
   function clean_styles( $str )
   {
     if( empty( $str ) ){
@@ -28,7 +45,7 @@ if( ! function_exists( 'clean_styles' ) ){
   }
 }
 
-if( ! function_exists( 'render_input' ) ){
+if ( ! function_exists( 'render_input' ) ) {
   function render_input( array $args )
   {
     if( empty( $args['id'] ) ){
@@ -65,5 +82,12 @@ if( ! function_exists( 'render_input' ) ){
     ?>
     </p>
     <?php
+  }
+}
+
+if ( ! function_exists( 'print_table' ) ) {
+  function print_table( array $datas )
+  {
+    echo get_template_html( P_PATH . 'templates/table-html.php', [ 'datas' => $datas ] );
   }
 }

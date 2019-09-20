@@ -19,8 +19,12 @@ class Admin_Startup
 
   public function enqueue_assets()
   {
-    wp_enqueue_style( 'pstyles-admin', P_URL_FOLDER . 'assets/css/admin_styles.css', [], P_VERSION, 'screen' );
+    wp_register_style( 'select2css', '//cdnjs.cloudflare.com/ajax/libs/select2/3.4.8/select2.css', false, P_VERSION, 'all' );
+    wp_enqueue_style( 'select2css' );
+    wp_enqueue_style( 'pstyles-admin', P_URL_FOLDER . 'assets/css/admin_styles.css', [], P_VERSION, 'all' );
 
+    wp_register_script( 'select2', '//cdnjs.cloudflare.com/ajax/libs/select2/3.4.8/select2.js', array( 'jquery' ), P_VERSION, true );
+    wp_enqueue_script( 'select2' );
     wp_enqueue_script( 'pscripts-admin', P_URL_FOLDER . 'assets/js/admin_js.js', [], P_VERSION, true );
 
     wp_localize_script('pscripts-admin', 'FUPAJAX',
@@ -49,6 +53,6 @@ class Admin_Startup
   public function upload_reports_page()
   {
     wp_enqueue_script( 'plupload-handlers' );
-    include P_PATH . 'includes/admin/templates/upload-reports.php';
+    echo get_template_html( P_PATH . 'templates/admin/upload-reports.php' );
   }
 }

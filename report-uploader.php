@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Report-Uploader
  * Description: Report-Uploader.
- * Version: 0.2.0
+ * Version: 0.4.1
  * Author: Hicme
  * Author URI: https://prosvit.design
  * Text Domain: report_uploader
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants.
 if ( ! defined( 'P_VERSION' ) ) {
-	define( 'P_VERSION', '0.1.0' );
+	define( 'P_VERSION', '0.4.1' );
 }
 
 if ( ! defined( 'P_PATH' ) ) {
@@ -31,6 +31,7 @@ register_activation_hook(__FILE__, 'p_activate');
 
 register_deactivation_hook( __FILE__, 'p_deactivate' );
 
+include P_PATH . 'vendor/autoload.php';
 include P_PATH . 'autoloader.php';
 include P_PATH . 'includes/functions/functions.php';
 

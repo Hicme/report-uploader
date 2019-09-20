@@ -1,6 +1,7 @@
 <?php
 
 namespace system;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Files
 {
@@ -13,6 +14,54 @@ class Files
   }
 
 
+  public static function get_report_content( $id )
+  {
+    $post = get_post( $id );
+    $file_path = false;
+
+    if ( 'agent-reports' !== $post->post_type ) {
+      return false;
+    }
+
+    if ( current_user_can('administrator') || get_current_user_id() === $post->post_author ) {
+      if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
+        if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
+          $file_path = $uploads['basedir'] . "/$file";
+        }
+      }
+    }
+
+    if ( $file_path ) {
+      $spreadsheet = IOFactory::load( $file_path );
+      return $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+    }
+
+    return false;
+  }
+
+  public static function get_download_link( $id )
+  {
+    $post = get_post( $id );
+    $url = '';
+
+    if ( 'agent-reports' !== $post->post_type ) {
+      return false;
+    }
+
+    if ( current_user_can('administrator') || get_current_user_id() === $post->post_author ) {
+      if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
+        if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
+          $url = $uploads['baseurl'] . "/$file";
+        }
+      }
+    }
+
+    if ( empty( $url ) ) {
+      return false;
+    }
+  
+    return $url;
+  }
 
   public static function process_report_upload( string $file_id )
   {
@@ -50,17 +99,22 @@ class Files
       'guid'           => $url,
       'post_title'     => $title,
       'post_content'   => $content,
-      'post_author'    => $author['id'],
+      'post_author'    => $author['user_id'],
       'post_excerpt'   => $excerpt,
       'comment_status' => 'closed',
       'post_type'      => 'agent-reports',
-      'post_status'    => 'inherit',
+      'post_status'    => 'publish',
       'post_parent'    => 0,
+      'post_date'      => "{$author['year']}-{$author['month']}-01"
     ];
 
     $id = wp_insert_post( $file_data, true );
     if ( ! is_wp_error( $id ) ) {
       update_post_meta( (int) $id, '_attached_file', _wp_relative_upload_path( $file ), true );
+      update_post_meta( (int) $id, '_platform', $author['platform'], true );
+      update_post_meta( (int) $id, '_isa_name', $author['isa_name'], true );
+      update_post_meta( (int) $id, '_isa_id', $author['isa_id'], true );
+      update_post_meta( (int) $id, '_date', "{$author['year']}-{$author['month']}", true );
     }
   
     return $id;
@@ -69,17 +123,41 @@ class Files
   private static function process_report_name( $file_id )
   {
     $name = $_FILES[ $file_id ]['name'];
-    $exploded_name = explode( '-', $name );
+    $type = $_FILES[ $file_id ]['type'];
+    $ext  = pathinfo( $name, PATHINFO_EXTENSION );
+    $exploded_name = explode( '-', str_replace( '.' . $ext, '', $name ) );
     $return = [];
 
-    if ( is_array( $exploded_name ) && isset( $exploded_name[2] ) && ! empty( trim( $exploded_name[2] ) ) ) {
-      $return['id'] = trim( $exploded_name[2] );
-    } else {
-      $return['error'] = __( "Can't parse file name. Double check it.", 'report_uploader' );
+    if (
+      $type != 'application/vnd.ms-excel' &&
+      $type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' &&
+      $type != 'text/csv'
+    ) {
+      return [ 'error' => __( "Wrong file type. Use WP Media library instead.", 'report_uploader' ) ];
     }
 
-    if ( ! report_uploader()->get_agent( $return['id'] ) ) {
-      $return['error'] = __( "Can't find agent by ISA ID => {$return['id']}.", 'report_uploader' );
+    if (
+      is_array( $exploded_name ) &&
+      isset( $exploded_name[2] ) &&
+      !empty( trim( $exploded_name[2] ) ) &&
+      isset( $exploded_name[3] ) &&
+      !empty( trim( $exploded_name[3] ) ) &&
+      isset( $exploded_name[4] ) &&
+      !empty( trim( $exploded_name[4] ) )
+    ) {
+      $return['platform'] = trim( $exploded_name[0] );
+      $return['isa_name'] = trim( $exploded_name[1] );
+      $return['isa_id'] = trim( $exploded_name[2] );
+      $return['year'] = trim( $exploded_name[3] );
+      $return['month'] = trim( $exploded_name[4] );
+    } else {
+      return [ 'error' =>__( "Can't parse file name. Double check it.", 'report_uploader' ) ];
+    }
+
+    if ( $user_id = report_uploader()->get_agent( $return['id'] ) ) {
+      $return['user_id'] = $user_id;
+    } else {
+      return [ 'error' => __( "Can't find agent by ISA ID => {$return['id']}.", 'report_uploader' ) ];
     }
 
     return $return;
@@ -87,7 +165,26 @@ class Files
 
   public static function unique_report_name( $dir, $name, $ext )
   {
-    return md5( str_replace( $ext, '', $name ) ) . $ext;
+    $filename = md5( str_replace( $ext, '', sanitize_file_name( $name ) ) ) . $ext ;
+    $ext  = pathinfo( $filename, PATHINFO_EXTENSION );
+    $name = pathinfo( $filename, PATHINFO_BASENAME );
+    $number = '';
+
+    if ( $ext ) {
+      $ext = '.' . $ext;
+    }
+
+    while ( file_exists( $dir . "/$filename" ) ) {
+      $new_number = (int) $number + 1;
+      if ( '' == "$number$ext" ) {
+        $filename = "$filename-" . $new_number;
+      } else {
+        $filename = str_replace( array( "-$number$ext", "$number$ext" ), '-' . $new_number . $ext, $filename );
+      }
+      $number = $new_number;
+    }
+
+    return $filename;
   }
 
   public static function files_mine_types( $types )

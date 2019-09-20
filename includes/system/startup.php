@@ -9,7 +9,7 @@ final class StartUp
 
   public function __get( $key )
   {
-    if ( in_array( $key, array( 'upload', 'get_agent' ), true ) ) {
+    if ( in_array( $key, array( 'upload', 'get_agent', 'download_report', 'view_report' ), true ) ) {
       return $this->$key();
     }
   }
@@ -66,6 +66,16 @@ final class StartUp
   public function get_agent( $isa_id )
   {
     return \system\User::find_agent_by_id( $isa_id );
+  }
+
+  public function download_report( $post_id )
+  {
+    return \system\Files::get_download_link( $post_id );
+  }
+
+  public function view_report( $post_id )
+  {
+    return \system\Files::get_report_content( $post_id );
   }
 
 }
