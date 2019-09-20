@@ -154,10 +154,10 @@ class Files
       return [ 'error' =>__( "Can't parse file name. Double check it.", 'report_uploader' ) ];
     }
 
-    if ( $user_id = report_uploader()->get_agent( $return['id'] ) ) {
+    if ( $user_id = report_uploader()->get_agent( $return['isa_id'] ) ) {
       $return['user_id'] = $user_id;
     } else {
-      return [ 'error' => __( "Can't find agent by ISA ID => {$return['id']}.", 'report_uploader' ) ];
+      return [ 'error' => __( "Can't find agent by ISA ID => {$return['isa_id']}.", 'report_uploader' ) ];
     }
 
     return $return;

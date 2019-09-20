@@ -43,6 +43,7 @@ final class StartUp
     \system\User::init();
     \system\Files::init();
     \system\Post_Types::init();
+    \system\Front::init();
 
     if( $this->is_request( 'cron' ) ){
       new \system\Cron();

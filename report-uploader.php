@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Report-Uploader
  * Description: Report-Uploader.
- * Version: 0.4.1
+ * Version: 0.7.0
  * Author: Hicme
  * Author URI: https://prosvit.design
  * Text Domain: report_uploader
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants.
 if ( ! defined( 'P_VERSION' ) ) {
-	define( 'P_VERSION', '0.4.1' );
+	define( 'P_VERSION', '0.7.0' );
 }
 
 if ( ! defined( 'P_PATH' ) ) {
