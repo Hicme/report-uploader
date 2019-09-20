@@ -20,8 +20,6 @@ class Ajax
 
     check_admin_referer( 'media-form' );
 
-    // $id = media_handle_upload( 'async-upload', 0 ); // - this need to be inspect
-
     $id = report_uploader()->upload( 'async-upload' );
 
     if ( is_wp_error( $id ) ) {
@@ -39,8 +37,9 @@ class Ajax
     $post  = get_post( $id );
     $file  = get_attached_file( $post->ID );
     $title = $post->post_title ? $post->post_title : wp_basename( $file );
-    echo '<div class="filename new"><span class="title">' . esc_html( wp_html_excerpt( $title, 60, '&hellip;' ) ) . '</span></div></div>';
-    exit();
+    echo '<div class="filename new"><span class="title">' . esc_html( wp_html_excerpt( $title, 60, '&hellip;' ) ) . '</span></div>';
+    echo '</div>';
+    exit;
   }
 
 }

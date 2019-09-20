@@ -11,25 +11,33 @@ class Files
     add_filter( 'wp_check_filetype_and_ext', [ __CLASS__, 'file_type_checks' ], 10, 4 );
 
     add_filter( 'plupload_init', [ __CLASS__, 'upload_destination' ] );
+
+    add_action( 'init', [ __CLASS__, 'download_report' ] );
+    add_action( 'before_delete_post', [ __CLASS__, 'delete_report_file' ], 10, 1 );
   }
 
 
-  public static function get_report_content( $id )
+
+  public static function generate_download_link( $id )
   {
     $post = get_post( $id );
-    $file_path = false;
 
-    if ( 'agent-reports' !== $post->post_type ) {
-      return false;
+    if (
+      $post &&
+      current_user_can( 'administrator' ) ||
+      ( current_user_can( 'agent' ) &&
+      $post->post_author == get_current_user_id() )
+    ) {
+      $link = add_query_arg( [ 'download' => $id, 'nonce' => wp_create_nonce( 'download-action' ) ], get_site_url() );
+      return $link;
     }
 
-    if ( current_user_can('administrator') || get_current_user_id() === $post->post_author ) {
-      if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
-        if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
-          $file_path = $uploads['basedir'] . "/$file";
-        }
-      }
-    }
+    return false;
+  }
+
+  public static function get_report_content( $id )
+  {
+    $file_path = self::get_report_src( $id );
 
     if ( $file_path ) {
       $spreadsheet = IOFactory::load( $file_path );
@@ -39,27 +47,39 @@ class Files
     return false;
   }
 
-  public static function get_download_link( $id )
+  public static function get_report_src( $id )
   {
     $post = get_post( $id );
-    $url = '';
+    $src = false;
 
     if ( 'agent-reports' !== $post->post_type ) {
       return false;
     }
 
-    if ( current_user_can('administrator') || get_current_user_id() === $post->post_author ) {
-      if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
-        if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
-          $url = $uploads['baseurl'] . "/$file";
-        }
+    if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
+      if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
+        $src = $uploads['basedir'] . "/$file";
       }
     }
 
-    if ( empty( $url ) ) {
+    return $src;
+  }
+
+  public static function get_report_url( $id )
+  {
+    $post = get_post( $id );
+    $url = false;
+
+    if ( 'agent-reports' !== $post->post_type ) {
       return false;
     }
-  
+
+    if ( $file = get_post_meta( $post->ID, '_attached_file', true ) ) {
+      if ( ( $uploads = wp_get_upload_dir() ) && false === $uploads['error'] ) {
+        $url = $uploads['baseurl'] . "/$file";
+      }
+    }
+
     return $url;
   }
 
@@ -217,5 +237,47 @@ class Files
     }
 
     return $defaults;
+  }
+
+  public static function delete_report_file( $post_id )
+  {
+    $post = get_post( $post_id );
+
+    if( ! $post || $post->post_type !== 'agent-reports' ) {
+      return;
+    }
+
+    $file_path = self::get_report_src( $post->ID );
+
+    if ( file_exists( $file_path ) ) {
+      unlink( $file_path );
+    }
+  }
+
+  public static function download_report()
+  {
+    if (
+      isset( $_REQUEST['download'] ) &&
+      !empty( $_REQUEST['download'] ) &&
+      wp_verify_nonce( $_REQUEST['nonce'], 'download-action' ) &&
+      is_user_logged_in()
+    ) {
+      $id = intval( $_REQUEST['download'] );
+
+      if ( $file = self::get_report_src( $id ) ) {
+        $post = get_post( $id );
+        $ext = pathinfo( $file, PATHINFO_EXTENSION );
+        $name = $post->post_title . ".$ext";
+
+        header( "Content-Description: File Transfer" ); 
+        header( "Content-Type: application/octet-stream" ); 
+        header( "Content-Disposition: attachment; filename={$name}" ); 
+
+        readfile( $file );
+        exit(); 
+      }
+    }
+
+    return false;
   }
 }

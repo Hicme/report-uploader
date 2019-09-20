@@ -5,6 +5,7 @@ namespace system;
 class Front
 {
   private static $paged = 0;
+  private static $per_page = 20;
   private static $query;
 
   public static function init()
@@ -50,7 +51,7 @@ class Front
   {
     if ( is_user_logged_in() && ( current_user_can('administrator') || current_user_can('agent') ) ) {
       $args = array(
-        'posts_per_page' => 20,
+        'posts_per_page' => self::$per_page,
         'order' => 'DESC',
         'orderby' => 'date',
         'post_type' => 'agent-reports',
@@ -77,7 +78,7 @@ class Front
             <td><?php echo get_post_meta( $report->ID, '_isa_name', true ); ?></td>
             <td><?php echo get_post_meta( $report->ID, '_isa_id', true ); ?></td>
             <td><?php echo get_post_meta( $report->ID, '_date', true ); ?></td>
-            <td><a href="<?php echo report_uploader()->download_report( $report->ID ); ?>">Download</a></td>
+            <td><a href="<?php echo report_uploader()->report_download_link( $report->ID ); ?>">Download</a></td>
           </tr>
         <?php
       }

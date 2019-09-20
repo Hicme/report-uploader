@@ -112,7 +112,7 @@ class Post_Types
     }
 
     if( $column_name === 'download_link' ){
-      if( $download_link = report_uploader()->download_report( $post_id ) ){
+      if( $download_link = report_uploader()->report_download_link( $post_id ) ){
         $download = __('Download', 'report_uploader');
         echo "<span class=\"report-download-link\"><a href=\"{$download_link}\"><span class=\"dashicons dashicons-download\"></span>{$download}</a></span>";
       }else{
